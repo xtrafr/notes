@@ -842,6 +842,7 @@
   </div>
 
   <script>
+    // Version: 1.1.0
     class NotesApp {
       constructor() {
         this.editor = document.querySelector('.editor');
@@ -1019,9 +1020,11 @@
           
           // Load from hash
           const content = await this.decompress(location.hash.slice(1));
+          console.log('Loaded content:', content); // Debug log
           if (content) {
             // Don't sanitize when loading from URL - content is from same source
             this.editor.innerHTML = content;
+            console.log('Editor innerHTML after load:', this.editor.innerHTML); // Debug log
           }
           this.updateTitle();
         } catch (e) { 
