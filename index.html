@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="A beautiful, minimalist notes app that lives in your browser">
+  <meta name="author" content="Xtra">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/x-icon" href="website.ico">
+  <title>Notes</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-elevated: #ffffff;
+      --text: #1a1a1a;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --border: #e5e7eb;
+      --border-light: #f3f4f6;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --accent-light: #dbeafe;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0a;
+        --bg-secondary: #111111;
+        --bg-elevated: #1a1a1a;
+        --text: #f9fafb;
+        --text-secondary: #d1d5db;
+        --text-tertiary: #9ca3af;
+        --border: #374151;
+        --border-light: #1f2937;
+        --accent: #3b82f6;
+        --accent-hover: #60a5fa;
+        --accent-light: #1e3a8a;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.25);
+        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+      }
+    }
+
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color-scheme: light dark;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--bg) 0%, var(--bg-secondary) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 80%, var(--accent-light) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, var(--accent-light) 0%, transparent 50%);
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: var(--shadow);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 0.5rem;
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-secondary);
+      color: var(--text);
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 20px;
+      z-index: 90;
+    }
+
+    .toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      background: var(--bg-secondary);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .toolbar-btn:hover {
+      background: var(--accent);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .toolbar-btn:active {
+      transform: translateY(0);
+    }
+
+    .toolbar-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .toolbar-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .toolbar-separator {
+      width: 1px;
+      background: var(--border);
+      margin: 0 0.5rem;
+      align-self: stretch;
+    }
+
+    .toolbar-tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition);
+      box-shadow: var(--shadow-lg);
+      z-index: 1000;
+    }
+
+    .toolbar-btn:hover .toolbar-tooltip {
+      opacity: 1;
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      max-width: 1000px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Editor Container */
+    .editor-container {
+      position: relative;
+      min-height: 70vh;
+    }
+
+    /* WYSIWYG Editor */
+    .editor {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      min-height: 70vh;
+      font-size: 1.125rem;
+      line-height: 1.75;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: var(--shadow-lg);
+      overflow-y: auto;
+    }
+
+    
+    .editor:empty::before {
+      content: 'Start typing your note...';
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+
+    /* Editor content styles */
+    .editor h1 { font-size: 2rem; font-weight: 700; margin: 1.5rem 0 1rem; }
+    .editor h2 { font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0 0.75rem; }
+    .editor h3 { font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+    .editor p { margin: 0.75rem 0; }
+    .editor ul, .editor ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+    .editor li { margin: 0.25rem 0; }
+    .editor blockquote {
+      border-left: 4px solid var(--accent);
+      padding-left: 1rem;
+      margin: 1rem 0;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    .editor code {
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, Consolas, monospace;
+      font-size: 0.875em;
+    }
+    .editor a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .editor hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+
+    /* Markdown Styles */
+    .md-h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin: 2rem 0 1rem;
+      color: var(--text);
+    }
+
+    .md-h2 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      line-height: 1.3;
+      margin: 1.75rem 0 0.75rem;
+      color: var(--text);
+    }
+
+    .md-h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      line-height: 1.3;
+      margin: 1.5rem 0 0.5rem;
+      color: var(--text);
+    }
+
+    .md-h4 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.4;
+      margin: 1.25rem 0 0.5rem;
+      color: var(--text);
+    }
+
+    .md-h5 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      line-height: 1.4;
+      margin: 1rem 0 0.5rem;
+      color: var(--text);
+    }
+
+    .md-h6 {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.5;
+      margin: 1rem 0 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .md-p {
+      margin: 1rem 0;
+    }
+
+    .md-code {
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+      font-size: 0.875em;
+    }
+
+    .md-codeblock {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+      font-size: 0.875rem;
+    }
+
+    .md-bold {
+      font-weight: 600;
+    }
+
+    .md-italic {
+      font-style: italic;
+    }
+
+    .md-strike {
+      text-decoration: line-through;
+    }
+
+    .md-url {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      transition: var(--transition);
+    }
+
+    .md-url:hover {
+      color: var(--accent-hover);
+    }
+
+    /* Menu */
+    .menu {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 0.5rem;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      min-width: 200px;
+      opacity: 0;
+      transform: translateY(10px) scale(0.95);
+      pointer-events: none;
+      transition: var(--transition);
+      z-index: 1000;
+    }
+
+    .menu.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: var(--transition);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+
+    .menu-item:hover {
+      background: var(--bg-secondary);
+      transform: translateX(2px);
+    }
+
+    .menu-item svg {
+      width: 18px;
+      height: 18px;
+      opacity: 0.7;
+    }
+
+    /* FAB */
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 64px;
+      height: 64px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-xl);
+      transition: var(--transition);
+      z-index: 999;
+    }
+
+    .fab:hover {
+      background: var(--accent-hover);
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+    }
+
+    .fab svg {
+      width: 28px;
+      height: 28px;
+      transition: var(--transition);
+    }
+
+    .fab.active svg {
+      transform: rotate(45deg);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.5rem;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: var(--transition);
+      z-index: 1001;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .toast-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toast.success .toast-icon {
+      color: var(--success);
+    }
+
+    .toast.error .toast-icon {
+      color: var(--error);
+    }
+
+    .toast-message {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* Loading */
+    .loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 32px;
+      height: 32px;
+      margin: -16px 0 0 -16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main {
+        padding: 1rem;
+        padding-top: 2rem;
+      }
+
+      .editor {
+        padding: 2rem;
+        font-size: 1rem;
+        min-height: 60vh;
+      }
+
+      .fab {
+        bottom: 1rem;
+        right: 1rem;
+        width: 48px;
+        height: 48px;
+      }
+
+      .menu {
+        bottom: 1rem;
+        right: 1rem;
+      }
+
+      .toast {
+        top: 1rem;
+        right: 1rem;
+        left: 1rem;
+      }
+
+      .btn-text {
+        display: none;
+      }
+    }
+
+    /* Print */
+    @media print {
+      .fab,
+      .menu,
+      .toast {
+        display: none !important;
+      }
+
+      .editor {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+      }
+    }
+
+    /* Accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Formatting Toolbar -->
+    <div class="toolbar">
+      <button class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+          <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+        </svg>
+        <span class="toolbar-tooltip">Bold</span>
+      </button>
+      
+      <button class="toolbar-btn" data-action="italic" title="Italic (Ctrl+I)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="4" x2="10" y2="4"></line>
+          <line x1="14" y1="20" x2="5" y2="20"></line>
+          <line x1="15" y1="4" x2="9" y2="20"></line>
+        </svg>
+        <span class="toolbar-tooltip">Italic</span>
+      </button>
+      
+      <button class="toolbar-btn" data-action="underline" title="Underline (Ctrl+U)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path>
+          <line x1="4" y1="21" x2="20" y2="21"></line>
+        </svg>
+        <span class="toolbar-tooltip">Underline</span>
+      </button>
+      
+      <button class="toolbar-btn" data-action="strike" title="Strikethrough">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"></path>
+          <path d="M16 8.5c0-2.5-2-4.5-4.5-4.5S7 6 7 8.5c0 1 .5 1.5 1 2"></path>
+          <path d="M7 15.5c0 2.5 2 4.5 4.5 4.5s4.5-2 4.5-4.5c0-1-.5-1.5-1-2"></path>
+        </svg>
+        <span class="toolbar-tooltip">Strikethrough</span>
+      </button>
+      
+      <div class="toolbar-separator"></div>
+      
+      <button class="toolbar-btn" data-action="h1" title="Heading 1">
+        <span style="font-weight: 700; font-size: 16px;">H1</span>
+        <span class="toolbar-tooltip">Heading 1</span>
+      </button>
+      
+      <button class="toolbar-btn" data-action="h2" title="Heading 2">
+        <span style="font-weight: 600; font-size: 14px;">H2</span>
+        <span class="toolbar-tooltip">Heading 2</span>
+      </button>
+      
+      <button class="toolbar-btn" data-action="h3" title="Heading 3">
+        <span style="font-weight: 600; font-size: 12px;">H3</span>
+        <span class="toolbar-tooltip">Heading 3</span>
+      </button>
+      
+      <div class="toolbar-separator"></div>
+      
+      <button class="toolbar-btn" data-action="code" title="Inline Code">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16,18 22,12 16,6"></polyline>
+          <polyline points="8,6 2,12 8,18"></polyline>
+        </svg>
+        <span class="toolbar-tooltip">Code</span>
+      </button>
+      
+      <div class="toolbar-separator"></div>
+      
+      <button class="toolbar-btn" data-action="ul" title="Bullet List">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        <span class="toolbar-tooltip">Bullet List</span>
+      </button>
+      
+      <button class="toolbar-btn" data-action="ol" title="Numbered List">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="10" y1="6" x2="21" y2="6"></line>
+          <line x1="10" y1="12" x2="21" y2="12"></line>
+          <line x1="10" y1="18" x2="21" y2="18"></line>
+          <path d="M4 6h1v4"></path>
+          <path d="M4 10h2"></path>
+          <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path>
+        </svg>
+        <span class="toolbar-tooltip">Numbered List</span>
+      </button>
+      
+      <div class="toolbar-separator"></div>
+      
+      <button class="toolbar-btn" data-action="quote" title="Quote">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+          <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
+        </svg>
+        <span class="toolbar-tooltip">Quote</span>
+      </button>
+      
+      <button class="toolbar-btn" data-action="link" title="Link (Ctrl+K)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+        </svg>
+        <span class="toolbar-tooltip">Link</span>
+      </button>
+      
+      <div class="toolbar-separator"></div>
+      
+      <button class="toolbar-btn" data-action="share" title="Share">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+          <polyline points="16,6 12,2 8,6"></polyline>
+          <line x1="12" y1="2" x2="12" y2="15"></line>
+        </svg>
+        <span class="toolbar-tooltip">Share</span>
+      </button>
+      
+      <button class="toolbar-btn" data-action="new" title="New Note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span class="toolbar-tooltip">New Note</span>
+      </button>
+      
+      <div class="toolbar-separator"></div>
+      
+      <button class="toolbar-btn" data-action="hr" title="Horizontal Rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span class="toolbar-tooltip">Horizontal Rule</span>
+      </button>
+    </div>
+    
+    <!-- Single Editor -->
+    <div class="editor-container">
+      <div class="editor" contenteditable="true"></div>
+    </div>
+  </main>
+
+  <!-- Config Button -->
+  <button class="fab" onclick="app.toggleMenu()" aria-label="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+
+  <!-- Menu -->
+  <nav class="menu" role="menu">
+    <a class="menu-item" href="#new" onclick="app.newNote()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      New Note
+    </a>
+    <button class="menu-item" onclick="app.download('html')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14,2 14,8 20,8"></polyline>
+        <line x1="12" y1="18" x2="12" y2="12"></line>
+        <polyline points="9,15 12,18 15,15"></polyline>
+      </svg>
+      Save as HTML
+    </button>
+    <button class="menu-item" onclick="app.download('text')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14,2 14,8 20,8"></polyline>
+        <line x1="12" y1="18" x2="12" y2="12"></line>
+        <polyline points="9,15 12,18 15,15"></polyline>
+      </svg>
+      Save as Text
+    </button>
+    <button class="menu-item" onclick="app.copyContent()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      Copy Content
+    </button>
+    <a class="menu-item" href="https://github.com/xtrafr/notes" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+      </svg>
+      GitHub
+    </a>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" role="alert">
+    <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20,6 9,17 4,12"></polyline>
+    </svg>
+    <span class="toast-message"></span>
+  </div>
+
+  <script>
+    class NotesApp {
+      constructor() {
+        this.editor = document.querySelector('.editor');
+        this.toolbar = document.querySelector('.toolbar');
+        this.menu = document.querySelector('.menu');
+        this.fab = document.querySelector('.fab');
+        this.toast = document.querySelector('.toast');
+        this.saveTimeout = null;
+        this.init();
+      }
+
+      async init() {
+        this.setupEditor();
+        this.setupToolbar();
+        this.setupEvents();
+        await this.load();
+        this.registerServiceWorker();
+        console.log('Notes loaded');
+      }
+
+      setupEditor() {
+        this.editor.contentEditable = 'true';
+        this.editor.spellcheck = true;
+
+        this.editor.addEventListener('paste', (e) => {
+          e.preventDefault();
+          document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
+        });
+
+        this.editor.addEventListener('keydown', (e) => {
+          if (e.ctrlKey || e.metaKey) {
+            switch (e.key.toLowerCase()) {
+              case 'b': e.preventDefault(); this.format('bold'); break;
+              case 'i': e.preventDefault(); this.format('italic'); break;
+              case 'u': e.preventDefault(); this.format('underline'); break;
+              case 'k': e.preventDefault(); this.format('link'); break;
+              case 's': e.preventDefault(); this.download('html'); break;
+            }
+          }
+        });
+      }
+
+      setupToolbar() {
+        this.toolbar.querySelectorAll('[data-action]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.format(btn.dataset.action);
+            this.updateToolbarState();
+          });
+        });
+        document.addEventListener('selectionchange', () => this.updateToolbarState());
+      }
+
+      setupEvents() {
+        this.editor.addEventListener('input', () => this.debouncedSave());
+        this.editor.addEventListener('blur', () => this.save());
+        window.addEventListener('hashchange', () => this.load());
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.menu') && !e.target.closest('.fab')) this.hideMenu();
+        });
+      }
+
+      format(action) {
+        this.editor.focus();
+        switch (action) {
+          case 'bold': document.execCommand('bold'); break;
+          case 'italic': document.execCommand('italic'); break;
+          case 'underline': document.execCommand('underline'); break;
+          case 'strike': document.execCommand('strikeThrough'); break;
+          case 'h1': document.execCommand('formatBlock', false, '<h1>'); break;
+          case 'h2': document.execCommand('formatBlock', false, '<h2>'); break;
+          case 'h3': document.execCommand('formatBlock', false, '<h3>'); break;
+          case 'ul': document.execCommand('insertUnorderedList'); break;
+          case 'ol': document.execCommand('insertOrderedList'); break;
+          case 'quote': document.execCommand('formatBlock', false, '<blockquote>'); break;
+          case 'code': this.toggleCode(); break;
+          case 'link': this.insertLink(); break;
+          case 'hr': document.execCommand('insertHorizontalRule'); break;
+          case 'share': this.share(); break;
+          case 'new': this.newNote(); break;
+        }
+        this.updateToolbarState();
+      }
+
+      toggleCode() {
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+        const text = range.toString();
+        if (!text) return;
+
+        let node = sel.anchorNode;
+        while (node && node !== this.editor) {
+          if (node.nodeName === 'CODE') {
+            node.parentNode.replaceChild(document.createTextNode(node.textContent), node);
+            return;
+          }
+          node = node.parentNode;
+        }
+
+        const code = document.createElement('code');
+        try { range.surroundContents(code); }
+        catch { 
+          const safeText = this.escapeHtml(text);
+          document.execCommand('insertHTML', false, `<code>${safeText}</code>`); 
+        }
+      }
+
+      insertLink() {
+        const text = window.getSelection().toString();
+        const url = prompt('URL:', 'https://');
+        if (!url) return;
+        
+        // Validate URL to prevent XSS
+        const sanitizedUrl = this.sanitizeUrl(url);
+        if (!sanitizedUrl) {
+          this.showToast('Invalid URL', 'error');
+          return;
+        }
+        
+        if (text) {
+          document.execCommand('createLink', false, sanitizedUrl);
+          this.editor.querySelectorAll(`a[href="${sanitizedUrl}"]`).forEach(a => {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+          });
+        } else {
+          const safeText = this.escapeHtml(sanitizedUrl);
+          document.execCommand('insertHTML', false, `<a href="${sanitizedUrl}" target="_blank" rel="noopener noreferrer">${safeText}</a>`);
+        }
+      }
+
+      updateToolbarState() {
+        const selection = window.getSelection();
+        const hasSelection = selection && selection.toString().trim().length > 0;
+        const hasContent = this.editor.textContent.trim().length > 0;
+        
+        const map = { bold: 'bold', italic: 'italic', underline: 'underline', strike: 'strikeThrough', ul: 'insertUnorderedList', ol: 'insertOrderedList' };
+        for (const [action, cmd] of Object.entries(map)) {
+          const btn = this.toolbar.querySelector(`[data-action="${action}"]`);
+          if (btn) {
+            const isActive = hasSelection && document.queryCommandState(cmd);
+            btn.classList.toggle('active', isActive);
+          }
+        }
+      }
+
+      async compress(str) {
+        const s = new CompressionStream('deflate-raw');
+        const w = s.writable.getWriter();
+        w.write(new TextEncoder().encode(str));
+        w.close();
+        return new Uint8Array(await new Response(s.readable).arrayBuffer()).toBase64({ alphabet: 'base64url' });
+      }
+
+      async decompress(b64) {
+        try {
+          const s = new DecompressionStream('deflate-raw');
+          const w = s.writable.getWriter();
+          w.write(Uint8Array.fromBase64(b64, { alphabet: 'base64url' }));
+          w.close();
+          return new TextDecoder().decode(await new Response(s.readable).arrayBuffer());
+        } catch { return ''; }
+      }
+
+      async load() {
+        try {
+          // If no hash in URL, clear the editor
+          if (!location.hash || location.hash === '#') {
+            this.editor.innerHTML = '';
+            localStorage.removeItem('notes-content');
+            document.title = 'Notes';
+            return;
+          }
+          
+          // Load from hash with validation
+          const content = await this.decompress(location.hash.slice(1));
+          if (content) {
+            const sanitizedContent = this.sanitizeHtml(content);
+            this.editor.innerHTML = sanitizedContent;
+          }
+          this.updateTitle();
+        } catch (e) { 
+          console.error('Failed to load content:', e);
+          this.editor.innerHTML = '';
+          document.title = 'Notes';
+        }
+      }
+
+      debouncedSave() {
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(() => this.save(), 500);
+      }
+
+      async save() {
+        try {
+          const content = this.editor.innerHTML;
+          if (!content || content === '<br>' || !content.trim()) {
+            localStorage.removeItem('notes-content');
+            if (location.hash) history.replaceState({}, '', location.pathname);
+            return;
+          }
+          const hash = '#' + await this.compress(content);
+          if (location.hash !== hash) history.replaceState({}, '', hash);
+          localStorage.setItem('notes-content', hash);
+          this.updateTitle();
+        } catch (e) { console.error(e); }
+      }
+
+      updateTitle() {
+        document.title = 'Notes';
+      }
+
+      toggleMenu() {
+        this.menu.classList.toggle('visible');
+        this.fab.classList.toggle('active');
+      }
+
+      hideMenu() {
+        this.menu.classList.remove('visible');
+        this.fab.classList.remove('active');
+      }
+
+      showToast(msg, type = 'success') {
+        this.toast.className = `toast ${type} visible`;
+        this.toast.querySelector('.toast-message').textContent = msg;
+        setTimeout(() => this.toast.classList.remove('visible'), 3000);
+      }
+
+      newNote() {
+        if (this.editor.textContent.trim() && !confirm('Start new note?')) return;
+        this.editor.innerHTML = '';
+        localStorage.removeItem('notes-content');
+        history.replaceState({}, '', location.pathname);
+        document.title = 'Notes';
+        this.editor.focus();
+      }
+
+      async share() {
+        try {
+          await navigator.clipboard.writeText(location.href);
+          this.showToast('Link copied!');
+        } catch { this.showToast('Copy failed', 'error'); }
+      }
+
+      async copyContent() {
+        try {
+          await navigator.clipboard.writeText(this.editor.textContent);
+          this.showToast('Copied!');
+        } catch { this.showToast('Copy failed', 'error'); }
+      }
+
+      download(format) {
+        const title = 'notes';
+        if (format === 'html') {
+          const content = this.sanitizeHtml(this.editor.innerHTML);
+          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Notes</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:2rem;line-height:1.6}code{background:#f5f5f5;padding:.2em .4em;border-radius:3px}blockquote{border-left:4px solid #3b82f6;padding-left:1rem;color:#666}</style></head><body>${content}</body></html>`;
+          this.downloadFile(html, `${title}.html`, 'text/html');
+        } else {
+          this.downloadFile(this.editor.textContent, `${title}.txt`, 'text/plain');
+        }
+        this.showToast(`Downloaded ${format.toUpperCase()}`);
+      }
+
+      downloadFile(content, name, type) {
+        const url = URL.createObjectURL(new Blob([content], { type }));
+        Object.assign(document.createElement('a'), { href: url, download: name }).click();
+        URL.revokeObjectURL(url);
+      }
+
+      registerServiceWorker() {
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+      }
+
+      sanitizeHtml(html) {
+        const div = document.createElement('div');
+        div.textContent = html;
+        return div.innerHTML;
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      sanitizeUrl(url) {
+        try {
+          // Basic URL validation
+          if (!url || typeof url !== 'string') return null;
+          
+          // Only allow http, https, and relative URLs
+          const trimmedUrl = url.trim();
+          if (!trimmedUrl) return null;
+          
+          // Check for dangerous protocols
+          if (trimmedUrl.startsWith('javascript:') || 
+              trimmedUrl.startsWith('data:') || 
+              trimmedUrl.startsWith('vbscript:') ||
+              trimmedUrl.startsWith('file:')) {
+            return null;
+          }
+          
+          // Ensure it starts with http/https or is a relative URL
+          if (trimmedUrl.startsWith('http://') || 
+              trimmedUrl.startsWith('https://') ||
+              trimmedUrl.startsWith('/') ||
+              trimmedUrl.startsWith('./') ||
+              trimmedUrl.startsWith('../')) {
+            return trimmedUrl;
+          }
+          
+          // Default to https for URLs without protocol
+          if (trimmedUrl.includes('.') && !trimmedUrl.includes(' ')) {
+            return 'https://' + trimmedUrl;
+          }
+          
+          return null;
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => window.app = new NotesApp());
+  </script>
+</body>
+</html>
