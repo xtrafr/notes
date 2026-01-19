@@ -7,7 +7,6 @@
 **A beautiful, minimalist notes app that lives in your browser**
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/?repo=textarea)
-[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/xtrafr/notes)
 
 </div>
 
@@ -31,7 +30,7 @@ Open [index.html](./index.html) in your browser and start typing.
 ### Clone locally
 ```bash
 git clone https://github.com/xtrafr/notes.git
-cd textarea
+cd notes
 open index.html
 ```
 
