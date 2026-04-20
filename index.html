@@ -635,6 +635,110 @@
       outline: 2px solid var(--accent);
       outline-offset: 2px;
     }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition);
+      z-index: 2000;
+      padding: 1rem;
+    }
+    .modal-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-xl);
+      transform: translateY(20px) scale(0.95);
+      transition: var(--transition);
+      color: var(--text);
+    }
+    .modal-overlay.visible .modal {
+      transform: translateY(0) scale(1);
+    }
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .modal-body {
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+    .input-field {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: var(--transition);
+      margin-top: 0.5rem;
+      font-family: inherit;
+    }
+    .input-field:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    
+    /* Status Bar */
+    .status-bar {
+      border-top: 1px solid var(--border);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      justify-content: flex-start;
+      gap: 1.5rem;
+      color: var(--text-tertiary);
+      font-size: 0.75rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      border-bottom-left-radius: var(--radius-xl);
+      border-bottom-right-radius: var(--radius-xl);
+      background: var(--bg-secondary);
+      opacity: 0.8;
+    }
+
+    .editor-container {
+      display: flex;
+      flex-direction: column;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .editor {
+      border: none;
+      box-shadow: none;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      min-height: calc(70vh - 40px);
+    }
   </style>
 </head>
 <body>
@@ -701,7 +805,16 @@
           <polyline points="16,18 22,12 16,6"></polyline>
           <polyline points="8,6 2,12 8,18"></polyline>
         </svg>
-        <span class="toolbar-tooltip">Code</span>
+        <span class="toolbar-tooltip">Inline Code</span>
+      </button>
+
+      <button class="toolbar-btn" data-action="codeblock" title="Code Block">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+        </svg>
+        <span class="toolbar-tooltip">Code Block</span>
       </button>
       
       <div class="toolbar-separator"></div>
@@ -780,6 +893,10 @@
     <!-- Single Editor -->
     <div class="editor-container">
       <div class="editor" contenteditable="true"></div>
+      <div class="status-bar">
+        <span id="word-count">0 words</span>
+        <span id="char-count">0 chars</span>
+      </div>
     </div>
   </main>
 
@@ -809,14 +926,15 @@
       </svg>
       Save as HTML
     </button>
-    <button class="menu-item" onclick="app.download('text')">
+    <button class="menu-item" onclick="app.download('markdown')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
         <polyline points="14,2 14,8 20,8"></polyline>
-        <line x1="12" y1="18" x2="12" y2="12"></line>
-        <polyline points="9,15 12,18 15,15"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10,9 9,9 8,9"></polyline>
       </svg>
-      Save as Text
+      Save as Markdown
     </button>
     <button class="menu-item" onclick="app.copyContent()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -825,6 +943,13 @@
       </svg>
       Copy Content
     </button>
+    <button class="menu-item" onclick="app.showProtectionModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      Password Protect
+    </button>
     <a class="menu-item" href="https://github.com/xtrafr/notes" target="_blank">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
@@ -832,6 +957,55 @@
       GitHub
     </a>
   </nav>
+
+  <div class="modal-overlay" id="password-modal">
+    <div class="modal">
+      <h3 class="modal-title" id="password-modal-title">Unlock Note</h3>
+      <div class="modal-body" id="password-modal-body">This note is encrypted. Please enter the password to unlock it.</div>
+      <input type="password" class="input-field" id="password-input" placeholder="Password">
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="password-cancel" style="display:none">Cancel</button>
+        <button class="btn btn-primary" id="password-submit">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="set-password-modal">
+    <div class="modal">
+      <h3 class="modal-title">Password Protect</h3>
+      <div class="modal-body">Set a password to encrypt this note end-to-end. Leave empty to remove password.</div>
+      <input type="password" class="input-field" id="set-password-input" placeholder="New Password">
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="document.getElementById('set-password-modal').classList.remove('visible')">Cancel</button>
+        <button class="btn btn-error" id="remove-password-btn" style="display:none">Remove</button>
+        <button class="btn btn-primary" id="set-password-submit">Protect</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal" style="max-width: 380px;">
+      <h3 class="modal-title">Share Note</h3>
+      <div class="modal-body">How would you like to share this note?</div>
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem;">
+        <button class="btn btn-primary" id="share-readonly-btn" style="width: 100%; justify-content: center; padding: 0.875rem; font-size: 1rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; margin-right: 12px;">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Read-Only Link
+        </button>
+        <button class="btn btn-secondary" id="share-editable-btn" style="width: 100%; justify-content: center; padding: 0.875rem; font-size: 1rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; margin-right: 12px;">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Editable Link
+        </button>
+        <button class="btn btn-ghost" onclick="document.getElementById('share-modal').classList.remove('visible')" style="width: 100%; justify-content: center; margin-top: 0.5rem;">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast -->
   <div class="toast" role="alert">
@@ -897,12 +1071,23 @@
       }
 
       setupEvents() {
-        this.editor.addEventListener('input', () => this.debouncedSave());
+        this.editor.addEventListener('input', () => {
+          this.debouncedSave();
+          this.updateCounts();
+        });
         this.editor.addEventListener('blur', () => this.save());
         window.addEventListener('hashchange', () => this.load());
         document.addEventListener('click', (e) => {
           if (!e.target.closest('.menu') && !e.target.closest('.fab')) this.hideMenu();
         });
+      }
+
+      updateCounts() {
+        const text = this.editor.innerText || '';
+        const chars = text.length;
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        document.getElementById('char-count').textContent = `${chars} chars`;
+        document.getElementById('word-count').textContent = `${words} words`;
       }
 
       format(action) {
@@ -919,6 +1104,7 @@
           case 'ol': document.execCommand('insertOrderedList'); break;
           case 'quote': document.execCommand('formatBlock', false, '<blockquote>'); break;
           case 'code': this.toggleCode(); break;
+          case 'codeblock': document.execCommand('formatBlock', false, '<pre>'); break;
           case 'link': this.insertLink(); break;
           case 'hr': document.execCommand('insertHorizontalRule'); break;
           case 'share': this.share(); break;
@@ -1010,27 +1196,61 @@
 
       async load() {
         try {
-          // If no hash in URL, clear the editor
           if (!location.hash || location.hash === '#') {
             this.editor.innerHTML = '';
             localStorage.removeItem('notes-content');
-            document.title = 'Notes';
+            this.updateTitle();
+            this.updateCounts();
             return;
           }
           
-          // Load from hash
-          const content = await this.decompress(location.hash.slice(1));
-          console.log('Loaded content:', content); // Debug log
+          let payload = location.hash.slice(1);
+          this.isReadOnly = false;
+          this.isEncrypted = false;
+          
+          if (payload.startsWith('r:')) {
+            this.isReadOnly = true;
+            payload = payload.slice(2);
+          }
+          if (payload.startsWith('e:')) {
+            this.isEncrypted = true;
+            payload = payload.slice(2);
+          }
+          
+          if (this.isReadOnly) {
+            this.editor.contentEditable = 'false';
+            this.toolbar.style.display = 'none';
+          } else {
+            this.editor.contentEditable = 'true';
+            this.toolbar.style.display = 'flex';
+          }
+
+          if (this.isEncrypted) {
+            const password = await this.askPassword("Unlock Note", "This note is encrypted end-to-end. Enter password to unlock.");
+            if (!password) {
+               this.editor.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-secondary);">Note is encrypted. Reload to unlock.</div>';
+               return;
+            }
+            try {
+              payload = await this.decrypt(payload, password);
+              this.currentPassword = password;
+              this.showToast('Note unlocked');
+            } catch (err) {
+              this.editor.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--error);">Incorrect password. Reload to try again.</div>';
+              return;
+            }
+          }
+          
+          const content = await this.decompress(payload);
           if (content) {
-            // Don't sanitize when loading from URL - content is from same source
             this.editor.innerHTML = content;
-            console.log('Editor innerHTML after load:', this.editor.innerHTML); // Debug log
           }
           this.updateTitle();
+          this.updateCounts();
         } catch (e) { 
           console.error('Failed to load content:', e);
           this.editor.innerHTML = '';
-          document.title = 'Notes';
+          this.updateTitle();
         }
       }
 
@@ -1040,6 +1260,7 @@
       }
 
       async save() {
+        if (this.isReadOnly) return;
         try {
           const content = this.editor.innerHTML;
           if (!content || content === '<br>' || !content.trim()) {
@@ -1047,7 +1268,11 @@
             if (location.hash) history.replaceState({}, '', location.pathname);
             return;
           }
-          const hash = '#' + await this.compress(content);
+          let hashPayload = await this.compress(content);
+          if (this.isEncrypted && this.currentPassword) {
+            hashPayload = 'e:' + await this.encrypt(hashPayload, this.currentPassword);
+          }
+          const hash = '#' + hashPayload;
           if (location.hash !== hash) history.replaceState({}, '', hash);
           localStorage.setItem('notes-content', hash);
           this.updateTitle();
@@ -1083,10 +1308,44 @@
         this.editor.focus();
       }
 
+      askShareType() {
+        return new Promise(resolve => {
+          const modal = document.getElementById('share-modal');
+          const readonlyBtn = document.getElementById('share-readonly-btn');
+          const editableBtn = document.getElementById('share-editable-btn');
+          const cancelBtn = modal.querySelector('.btn-ghost');
+          
+          modal.classList.add('visible');
+          
+          const finish = (type) => {
+            modal.classList.remove('visible');
+            readonlyBtn.onclick = null;
+            editableBtn.onclick = null;
+            cancelBtn.onclick = null;
+            resolve(type);
+          };
+          
+          readonlyBtn.onclick = () => finish('readonly');
+          editableBtn.onclick = () => finish('editable');
+          cancelBtn.onclick = () => finish(null);
+        });
+      }
+
       async share() {
         try {
-          await navigator.clipboard.writeText(location.href);
-          this.showToast('Link copied!');
+          const shareType = await this.askShareType();
+          if (!shareType) return;
+          
+          let hash = location.hash;
+          if (shareType === 'readonly') {
+            let p = hash.slice(1);
+            if (p.startsWith('e:')) p = 'r:e:' + p.slice(2);
+            else if (!p.startsWith('r:')) p = 'r:' + p;
+            hash = '#' + p;
+          }
+          const shareUrl = location.origin + location.pathname + hash;
+          await navigator.clipboard.writeText(shareUrl);
+          this.showToast(shareType === 'readonly' ? 'Read-Only Link Copied!' : 'Editable Link Copied!');
         } catch { this.showToast('Copy failed', 'error'); }
       }
 
@@ -1101,12 +1360,53 @@
         const title = 'notes';
         if (format === 'html') {
           const content = this.sanitizeHtml(this.editor.innerHTML);
-          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Notes</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:2rem;line-height:1.6}code{background:#f5f5f5;padding:.2em .4em;border-radius:3px}blockquote{border-left:4px solid #3b82f6;padding-left:1rem;color:#666}</style></head><body>${content}</body></html>`;
+          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Notes</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:2rem;line-height:1.6}code{background:#f5f5f5;padding:.2em .4em;border-radius:3px}blockquote{border-left:4px solid #3b82f6;padding-left:1rem;color:#666}pre{background:#f8f9fa;padding:1rem;border-radius:8px;overflow-x:auto}</style></head><body>${content}</body></html>`;
           this.downloadFile(html, `${title}.html`, 'text/html');
+        } else if (format === 'markdown') {
+          this.downloadFile(this.htmlToMarkdown(this.editor), `${title}.md`, 'text/markdown');
         } else {
           this.downloadFile(this.editor.textContent, `${title}.txt`, 'text/plain');
         }
         this.showToast(`Downloaded ${format.toUpperCase()}`);
+      }
+
+      htmlToMarkdown(element) {
+        let md = '';
+        const children = element.childNodes;
+        for (let i = 0; i < children.length; i++) {
+          const child = children[i];
+          if (child.nodeType === Node.TEXT_NODE) {
+            md += child.textContent;
+          } else if (child.nodeType === Node.ELEMENT_NODE) {
+            let inner = this.htmlToMarkdown(child);
+            switch (child.tagName.toLowerCase()) {
+              case 'h1': md += `\n# ${inner}\n\n`; break;
+              case 'h2': md += `\n## ${inner}\n\n`; break;
+              case 'h3': md += `\n### ${inner}\n\n`; break;
+              case 'p': md += `\n${inner}\n\n`; break;
+              case 'b': case 'strong': md += `**${inner}**`; break;
+              case 'i': case 'em': md += `_${inner}_`; break;
+              case 'u': md += `<u>${inner}</u>`; break;
+              case 'strike': case 's': case 'del': md += `~~${inner}~~`; break;
+              case 'a': md += `[${inner}](${child.href})`; break;
+              case 'code': md += `\`${inner}\``; break;
+              case 'pre': md += `\n\`\`\`\n${child.textContent}\n\`\`\`\n\n`; break;
+              case 'blockquote': md += `\n> ${(' ' + inner).trim().replace(/\n/g, '\n> ')}\n\n`; break;
+              case 'ul': case 'ol': md += `\n${inner}\n`; break;
+              case 'li': 
+                const isOl = child.parentNode && child.parentNode.tagName.toLowerCase() === 'ol';
+                const prefix = isOl ? '1. ' : '- ';
+                md += `${prefix}${inner}\n`; break;
+              case 'hr': md += `\n---\n\n`; break;
+              case 'br': md += `\n`; break;
+              case 'div': 
+                if (child.classList.contains('toolbar') || child.classList.contains('status-bar')) break;
+                md += `\n${inner}`; break;
+              default: md += inner; break;
+            }
+          }
+        }
+        return md.replace(/\n{3,}/g, '\n\n').trim();
       }
 
       downloadFile(content, name, type) {
@@ -1135,39 +1435,110 @@
 
       sanitizeUrl(url) {
         try {
-          // Basic URL validation
           if (!url || typeof url !== 'string') return null;
-          
-          // Only allow http, https, and relative URLs
           const trimmedUrl = url.trim();
           if (!trimmedUrl) return null;
-          
-          // Check for dangerous protocols
-          if (trimmedUrl.startsWith('javascript:') || 
-              trimmedUrl.startsWith('data:') || 
-              trimmedUrl.startsWith('vbscript:') ||
-              trimmedUrl.startsWith('file:')) {
-            return null;
-          }
-          
-          // Ensure it starts with http/https or is a relative URL
-          if (trimmedUrl.startsWith('http://') || 
-              trimmedUrl.startsWith('https://') ||
-              trimmedUrl.startsWith('/') ||
-              trimmedUrl.startsWith('./') ||
-              trimmedUrl.startsWith('../')) {
-            return trimmedUrl;
-          }
-          
-          // Default to https for URLs without protocol
-          if (trimmedUrl.includes('.') && !trimmedUrl.includes(' ')) {
-            return 'https://' + trimmedUrl;
-          }
-          
+          if (trimmedUrl.startsWith('javascript:') || trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('vbscript:') || trimmedUrl.startsWith('file:')) return null;
+          if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('/') || trimmedUrl.startsWith('./') || trimmedUrl.startsWith('../')) return trimmedUrl;
+          if (trimmedUrl.includes('.') && !trimmedUrl.includes(' ')) return 'https://' + trimmedUrl;
           return null;
         } catch (e) {
           return null;
         }
+      }
+
+      async deriveKey(password, salt) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
+        return await crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+          keyMaterial, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']
+        );
+      }
+
+      async encrypt(b64Data, password) {
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await this.deriveKey(password, salt);
+        const encoded = new TextEncoder().encode(b64Data);
+        const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, encoded);
+        
+        const bundle = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+        bundle.set(salt, 0);
+        bundle.set(iv, salt.length);
+        bundle.set(new Uint8Array(encrypted), salt.length + iv.length);
+        
+        return bundle.toBase64({ alphabet: 'base64url' });
+      }
+
+      async decrypt(b64Bundle, password) {
+        const bundle = Uint8Array.fromBase64(b64Bundle, { alphabet: 'base64url' });
+        const salt = bundle.slice(0, 16);
+        const iv = bundle.slice(16, 28);
+        const ciphertext = bundle.slice(28);
+        
+        const key = await this.deriveKey(password, salt);
+        const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ciphertext);
+        return new TextDecoder().decode(decrypted);
+      }
+
+      askPassword(title, body, isSetup = false) {
+        return new Promise(resolve => {
+          const modal = isSetup ? document.getElementById('set-password-modal') : document.getElementById('password-modal');
+          const input = isSetup ? document.getElementById('set-password-input') : document.getElementById('password-input');
+          const submitBtn = isSetup ? document.getElementById('set-password-submit') : document.getElementById('password-submit');
+          const cancelBtn = document.getElementById('password-cancel');
+          const removeBtn = document.getElementById('remove-password-btn');
+
+          if (!isSetup) {
+            document.getElementById('password-modal-title').textContent = title;
+            document.getElementById('password-modal-body').textContent = body;
+          } else {
+             if (this.isEncrypted) {
+               removeBtn.style.display = 'block';
+             } else {
+               removeBtn.style.display = 'none';
+             }
+          }
+
+          input.value = '';
+          modal.classList.add('visible');
+          input.focus();
+
+          const finish = (val) => {
+            modal.classList.remove('visible');
+            submitBtn.onclick = null;
+            if (cancelBtn) cancelBtn.onclick = null;
+            if (removeBtn) removeBtn.onclick = null;
+            input.onkeydown = null;
+            resolve(val);
+          };
+
+          submitBtn.onclick = () => finish(input.value);
+          if (cancelBtn) cancelBtn.onclick = () => finish(null);
+          if (removeBtn) removeBtn.onclick = () => finish(""); 
+          input.onkeydown = (e) => {
+            if (e.key === 'Enter') finish(input.value);
+            if (e.key === 'Escape' && isSetup) finish(null);
+          };
+        });
+      }
+
+      async showProtectionModal() {
+        this.hideMenu();
+        const pass = await this.askPassword('', '', true);
+        if (pass === null) return;
+        if (pass === "") {
+          this.isEncrypted = false;
+          this.currentPassword = null;
+          this.showToast('Password removed');
+          this.save();
+          return;
+        }
+        this.isEncrypted = true;
+        this.currentPassword = pass;
+        this.showToast('Note encrypted');
+        this.save();
       }
     }
 
