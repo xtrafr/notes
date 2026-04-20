@@ -14,13 +14,14 @@
 
 ## Features
 
-- **Rich Text Editing** - Bold, italic, underline, headings, lists, and more
-- **Share via URL** - Your notes are encoded in the URL hash
-- **Auto-save** - Saves to localStorage as backup
-- **Dark Mode** - Automatically adapts to your system preference
-- **Works Offline** - Install as a PWA and use anywhere
-- **Zero Dependencies** - Just pure HTML, CSS, and JavaScript
-- **Beautiful UI** - Clean, modern design with smooth animations
+- **Rich Text Editing** - Bold, italic, underline, headings, task checklists, and more
+- **Share via URL** - Your notes are encoded directly in the URL hash
+- **Multi-Note Library** - Instantly switch between unlimited saved notes
+- **E2E Encryption** - Lock sensitive notes with AES-GCM passwords
+- **Advanced Sharing** - Issue Read-Only links or self-destructing Timebombs
+- **Works Offline** - Install natively as a PWA and use anywhere
+- **Zero Dependencies** - Just pure vanilla HTML, CSS, and JS
+- **Beautiful UI** - Minimalist, brutalist design with smooth animations
 
 ## Quick Start
 
@@ -42,14 +43,12 @@ open index.html
 - `Ctrl/Cmd + K` - [Link](https://example.com)
 - `Ctrl/Cmd + S` - Download as HTML file
 
-## How it Works
+Your primary data stays in a highly-optimized library inside your browser's local storage. On top of that, your note seamlessly syncs into the URL Hash using standard base64 compression. This means:
 
-Your note is automatically saved to the URL hash. This means:
-
-- **Share notes** - Just copy the URL
-- **Bookmark** - Save notes for later
-- **No database** - Your data stays private
-- **Works offline** - LocalStorage backup included
+- **Library context** - The app tracks what note you are editing instantly
+- **Share notes** - Just copy the URL to hand someone an active clone
+- **No database** - Fast and completely private
+- **Offline first** - PWA capability included
 
 ## Tech Stack
 
@@ -61,11 +60,12 @@ Your note is automatically saved to the URL hash. This means:
 ## Project Structure
 
 ```
-textarea/
-├── index.html          # The entire app (single file!)
-├── manifest.json       # PWA manifest
-├── sw.js              # Service worker for offline support
-├── favicon.ico        # Favicon
+notes/
+├── index.html         # HTML structure & Generic UI Modals
+├── style.css          # Brutalist UI styling and tokens
+├── app.js             # Core algorithms (Multi-note logic, E2EE, hashing)
+├── manifest.json      # PWA manifest
+├── sw.js              # Service worker for offline app install
 └── README.md          # This file
 ```
 
