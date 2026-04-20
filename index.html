@@ -819,6 +819,14 @@
       
       <div class="toolbar-separator"></div>
       
+      <button class="toolbar-btn" data-action="todo" title="Task List">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 11 12 14 23 3"></polyline>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        </svg>
+        <span class="toolbar-tooltip">Task List</span>
+      </button>
+
       <button class="toolbar-btn" data-action="ul" title="Bullet List">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="8" y1="6" x2="21" y2="6"></line>
@@ -910,6 +918,13 @@
 
   <!-- Menu -->
   <nav class="menu" role="menu">
+    <button class="menu-item" onclick="app.openLibrary()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+      My Notes
+    </button>
     <a class="menu-item" href="#new" onclick="app.newNote()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -950,6 +965,14 @@
       </svg>
       Password Protect
     </button>
+    <button class="menu-item" id="install-app-btn" onclick="app.installApp()" style="display:none; color: var(--accent);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      Install App
+    </button>
     <a class="menu-item" href="https://github.com/xtrafr/notes" target="_blank">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
@@ -957,6 +980,19 @@
       GitHub
     </a>
   </nav>
+
+  <div class="modal-overlay" id="library-modal">
+    <div class="modal" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 class="modal-title" style="margin: 0;">My Notes</h3>
+        <button class="btn btn-ghost" onclick="document.getElementById('library-modal').classList.remove('visible')">Close</button>
+      </div>
+      <div class="modal-body">
+        <button class="btn btn-primary" onclick="app.newNote()" style="width: 100%; justify-content: center; margin-bottom: 1rem;">+ Create New Note</button>
+        <div id="library-list" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-overlay" id="password-modal">
     <div class="modal">
@@ -987,6 +1023,17 @@
     <div class="modal" style="max-width: 380px;">
       <h3 class="modal-title">Share Note</h3>
       <div class="modal-body">How would you like to share this note?</div>
+
+      <div style="margin-top: 1rem;">
+        <label style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block;">Link Expiration</label>
+        <select id="share-expiration" class="input-field" style="margin-top: 0; cursor: pointer;">
+          <option value="never">Never Expire</option>
+          <option value="1">Expire in 1 Hour</option>
+          <option value="24">Expire in 1 Day</option>
+          <option value="168">Expire in 1 Week</option>
+        </select>
+      </div>
+
       <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem;">
         <button class="btn btn-primary" id="share-readonly-btn" style="width: 100%; justify-content: center; padding: 0.875rem; font-size: 1rem;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; margin-right: 12px;">
@@ -1029,12 +1076,31 @@
       }
 
       async init() {
+        this.notes = [];
+        this.currentNoteId = null;
+        this.migrateStorage();
         this.setupEditor();
         this.setupToolbar();
         this.setupEvents();
         await this.load();
         this.registerServiceWorker();
         console.log('Notes loaded');
+      }
+
+      migrateStorage() {
+        try {
+          const libraryData = localStorage.getItem('notes-library');
+          if (libraryData) {
+            this.notes = JSON.parse(libraryData);
+          } else {
+            const oldHash = localStorage.getItem('notes-content');
+            if (oldHash) {
+              this.notes.push({ id: 'note-' + Date.now(), title: 'Migrated Note', hash: oldHash, updatedAt: Date.now() });
+              localStorage.removeItem('notes-content');
+              localStorage.setItem('notes-library', JSON.stringify(this.notes));
+            }
+          }
+        } catch(e) { console.error('Migration failed', e); }
       }
 
       setupEditor() {
@@ -1075,6 +1141,13 @@
           this.debouncedSave();
           this.updateCounts();
         });
+        this.editor.addEventListener('change', (e) => {
+          if (e.target.type === 'checkbox') {
+             if (e.target.checked) e.target.setAttribute('checked', 'true');
+             else e.target.removeAttribute('checked');
+             this.debouncedSave();
+          }
+        });
         this.editor.addEventListener('blur', () => this.save());
         window.addEventListener('hashchange', () => this.load());
         document.addEventListener('click', (e) => {
@@ -1102,6 +1175,7 @@
           case 'h3': document.execCommand('formatBlock', false, '<h3>'); break;
           case 'ul': document.execCommand('insertUnorderedList'); break;
           case 'ol': document.execCommand('insertOrderedList'); break;
+          case 'todo': document.execCommand('insertHTML', false, '<input type="checkbox" style="margin-right:0.5rem; cursor:pointer;" contenteditable="false"> '); break;
           case 'quote': document.execCommand('formatBlock', false, '<blockquote>'); break;
           case 'code': this.toggleCode(); break;
           case 'codeblock': document.execCommand('formatBlock', false, '<pre>'); break;
@@ -1194,27 +1268,51 @@
         } catch { return ''; }
       }
 
+      parsePayload(hash) {
+          let p = hash.startsWith('#') ? hash.slice(1) : hash;
+          let isReadonly = false;
+          let isEncrypted = false;
+          let expireTime = null;
+          
+          while (p.includes(':')) {
+            if (p.startsWith('r:')) { isReadonly = true; p = p.slice(2); }
+            else if (p.startsWith('e:')) { isEncrypted = true; p = p.slice(2); }
+            else if (p.startsWith('t')) {
+              let nextColon = p.indexOf(':');
+              if (nextColon !== -1) {
+                expireTime = parseInt(p.substring(1, nextColon));
+                p = p.substring(nextColon + 1);
+              } else break;
+            }
+            else break;
+          }
+          return { isReadonly, isEncrypted, expireTime, base64: p };
+      }
+
       async load() {
         try {
           if (!location.hash || location.hash === '#') {
             this.editor.innerHTML = '';
-            localStorage.removeItem('notes-content');
+            this.currentNoteId = null;
             this.updateTitle();
             this.updateCounts();
             return;
           }
           
-          let payload = location.hash.slice(1);
-          this.isReadOnly = false;
-          this.isEncrypted = false;
-          
-          if (payload.startsWith('r:')) {
-            this.isReadOnly = true;
-            payload = payload.slice(2);
-          }
-          if (payload.startsWith('e:')) {
-            this.isEncrypted = true;
-            payload = payload.slice(2);
+          const existingNote = this.notes.find(n => n.hash === location.hash);
+          this.currentNoteId = existingNote ? existingNote.id : null;
+
+          let { isReadonly, isEncrypted, expireTime, base64: payload } = this.parsePayload(location.hash);
+          this.isReadOnly = isReadonly;
+          this.isEncrypted = isEncrypted;
+
+          if (expireTime && Date.now() > expireTime) {
+             this.editor.innerHTML = '<div style="text-align:center; padding: 3rem; color: var(--error);"><h2>Note Expired</h2><p>This note has reached its time limit and self-destructed.</p></div>';
+             history.replaceState({}, '', location.pathname); 
+             this.isReadOnly = true; 
+             this.toolbar.style.display = 'none';
+             this.editor.contentEditable = 'false';
+             return;
           }
           
           if (this.isReadOnly) {
@@ -1264,8 +1362,11 @@
         try {
           const content = this.editor.innerHTML;
           if (!content || content === '<br>' || !content.trim()) {
-            localStorage.removeItem('notes-content');
             if (location.hash) history.replaceState({}, '', location.pathname);
+            if (this.currentNoteId) {
+               this.notes = this.notes.filter(n => n.id !== this.currentNoteId);
+               localStorage.setItem('notes-library', JSON.stringify(this.notes));
+            }
             return;
           }
           let hashPayload = await this.compress(content);
@@ -1273,8 +1374,25 @@
             hashPayload = 'e:' + await this.encrypt(hashPayload, this.currentPassword);
           }
           const hash = '#' + hashPayload;
+          
+          if (!this.currentNoteId) {
+              this.currentNoteId = 'note-' + Date.now();
+              const textSnippet = this.editor.textContent.trim().substring(0, 30);
+              const title = textSnippet || 'Untitled Note';
+              this.notes.push({ id: this.currentNoteId, title: title, hash: hash, updatedAt: Date.now() });
+          } else {
+              const idx = this.notes.findIndex(n => n.id === this.currentNoteId);
+              if (idx > -1) {
+                  this.notes[idx].hash = hash;
+                  this.notes[idx].updatedAt = Date.now();
+                  const textSnippet = this.editor.textContent.trim().substring(0, 30);
+                  this.notes[idx].title = textSnippet || 'Untitled Note';
+              }
+          }
+          
+          localStorage.setItem('notes-library', JSON.stringify(this.notes));
+
           if (location.hash !== hash) history.replaceState({}, '', hash);
-          localStorage.setItem('notes-content', hash);
           this.updateTitle();
         } catch (e) { console.error(e); }
       }
@@ -1300,12 +1418,58 @@
       }
 
       newNote() {
-        if (this.editor.textContent.trim() && !confirm('Start new note?')) return;
+        if (this.editor.textContent.trim() && !confirm('Start new note? The current note is saved to your Library.')) return;
         this.editor.innerHTML = '';
-        localStorage.removeItem('notes-content');
+        this.currentNoteId = null;
         history.replaceState({}, '', location.pathname);
-        document.title = 'Notes';
+        this.updateTitle();
+        this.updateCounts();
         this.editor.focus();
+        if (document.getElementById('library-modal').classList.contains('visible')) {
+           document.getElementById('library-modal').classList.remove('visible');
+        }
+      }
+
+      openLibrary() {
+        this.hideMenu();
+        const listDiv = document.getElementById('library-list');
+        listDiv.innerHTML = '';
+        if (this.notes.length === 0) {
+           listDiv.innerHTML = '<div style="color:var(--text-tertiary); text-align:center; padding: 1rem;">No saved notes yet.</div>';
+        } else {
+           this.notes.sort((a,b) => b.updatedAt - a.updatedAt).forEach(n => {
+              const d = new Date(n.updatedAt).toLocaleString();
+              const div = document.createElement('div');
+              div.style = 'display:flex; justify-content:space-between; align-items:center; background:var(--bg-secondary); padding:0.75rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--border);';
+              
+              const info = document.createElement('div');
+              info.style = 'cursor:pointer; flex: 1;';
+              info.innerHTML = `<strong>${this.escapeHtml(n.title)}</strong><br><span style="font-size:0.75rem; color:var(--text-tertiary);">${d}</span>`;
+              info.onclick = () => {
+                 history.replaceState({}, '', n.hash);
+                 this.load();
+                 document.getElementById('library-modal').classList.remove('visible');
+              };
+
+              const del = document.createElement('button');
+              del.className = 'btn btn-error';
+              del.textContent = 'Delete';
+              del.style.padding = '0.4rem 0.8rem';
+              del.onclick = () => {
+                 if (confirm('Delete this note permanently?')) {
+                    this.notes = this.notes.filter(x => x.id !== n.id);
+                    localStorage.setItem('notes-library', JSON.stringify(this.notes));
+                    if (this.currentNoteId === n.id) this.newNote();
+                    else this.openLibrary();
+                 }
+              };
+
+              div.appendChild(info);
+              div.appendChild(del);
+              listDiv.appendChild(div);
+           });
+        }
+        document.getElementById('library-modal').classList.add('visible');
       }
 
       askShareType() {
@@ -1336,13 +1500,25 @@
           const shareType = await this.askShareType();
           if (!shareType) return;
           
-          let hash = location.hash;
-          if (shareType === 'readonly') {
-            let p = hash.slice(1);
-            if (p.startsWith('e:')) p = 'r:e:' + p.slice(2);
-            else if (!p.startsWith('r:')) p = 'r:' + p;
-            hash = '#' + p;
+          const expHours = document.getElementById('share-expiration').value;
+          
+          let { isEncrypted, expireTime, base64 } = this.parsePayload(location.hash);
+          
+          let newFlags = '';
+          if (shareType === 'readonly') newFlags += 'r:';
+          
+          if (expHours !== 'never') {
+             const expMs = Date.now() + (parseInt(expHours) * 60 * 60 * 1000);
+             newFlags += `t${expMs}:`;
+          } else if (expireTime) {
+             // Keep existing expiration if they don't overwrite it
+             newFlags += `t${expireTime}:`;
           }
+          
+          if (isEncrypted || this.isEncrypted) newFlags += 'e:';
+          
+          const hash = '#' + newFlags + base64;
+          
           const shareUrl = location.origin + location.pathname + hash;
           await navigator.clipboard.writeText(shareUrl);
           this.showToast(shareType === 'readonly' ? 'Read-Only Link Copied!' : 'Editable Link Copied!');
@@ -1389,6 +1565,11 @@
               case 'u': md += `<u>${inner}</u>`; break;
               case 'strike': case 's': case 'del': md += `~~${inner}~~`; break;
               case 'a': md += `[${inner}](${child.href})`; break;
+              case 'input':
+                if (child.type === 'checkbox') {
+                  md += child.checked || child.hasAttribute('checked') ? '[x] ' : '[ ] ';
+                }
+                break;
               case 'code': md += `\`${inner}\``; break;
               case 'pre': md += `\n\`\`\`\n${child.textContent}\n\`\`\`\n\n`; break;
               case 'blockquote': md += `\n> ${(' ' + inner).trim().replace(/\n/g, '\n> ')}\n\n`; break;
@@ -1419,6 +1600,17 @@
         if ('serviceWorker' in navigator && location.protocol !== 'file:') {
           navigator.serviceWorker.register('/sw.js').catch(() => {});
         }
+      }
+
+      async installApp() {
+        if (!window.deferredPrompt) return;
+        this.hideMenu();
+        window.deferredPrompt.prompt();
+        const { outcome } = await window.deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          document.getElementById('install-app-btn').style.display = 'none';
+        }
+        window.deferredPrompt = null;
       }
 
       sanitizeHtml(html) {
@@ -1542,7 +1734,16 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => window.app = new NotesApp());
+    document.addEventListener('DOMContentLoaded', () => {
+      window.app = new NotesApp();
+    });
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+      const btn = document.getElementById('install-app-btn');
+      if (btn) btn.style.display = 'flex';
+    });
   </script>
 </body>
 </html>
