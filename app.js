@@ -431,7 +431,7 @@
           const modal = document.getElementById('share-modal');
           const readonlyBtn = document.getElementById('share-readonly-btn');
           const editableBtn = document.getElementById('share-editable-btn');
-          const cancelBtn = modal.querySelector('.btn-ghost');
+          const closeBtn = modal.querySelector('.btn-close');
           
           modal.classList.add('visible');
           
@@ -439,13 +439,13 @@
             modal.classList.remove('visible');
             readonlyBtn.onclick = null;
             editableBtn.onclick = null;
-            cancelBtn.onclick = null;
+            closeBtn.onclick = null;
             resolve(type);
           };
           
           readonlyBtn.onclick = () => finish('readonly');
           editableBtn.onclick = () => finish('editable');
-          cancelBtn.onclick = () => finish(null);
+          closeBtn.onclick = () => finish(null);
         });
       }
 

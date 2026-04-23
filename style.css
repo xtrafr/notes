@@ -627,21 +627,21 @@
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
-      pointer-events: none;
-      transition: var(--transition);
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
       z-index: 2000;
       padding: 1rem;
     }
     .modal-overlay.visible {
       opacity: 1;
-      pointer-events: auto;
+      visibility: visible;
     }
     .modal {
       background: var(--bg-elevated);
@@ -650,13 +650,39 @@
       padding: 1.5rem;
       width: 100%;
       max-width: 400px;
-      box-shadow: var(--shadow-xl);
-      transform: translateY(20px) scale(0.95);
-      transition: var(--transition);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      transform: translateY(15px) scale(0.98);
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       color: var(--text);
     }
     .modal-overlay.visible .modal {
       transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+    
+    /* Entrance animations */
+    .modal-overlay.visible .share-option-group {
+      animation: modalItemFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both 0.1s;
+    }
+    
+    .modal-overlay.visible .share-btn:nth-child(1) {
+      animation: modalItemFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both 0.15s;
+    }
+    
+    .modal-overlay.visible .share-btn:nth-child(2) {
+      animation: modalItemFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s;
+    }
+    
+    @keyframes modalItemFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     .modal-title {
       font-size: 1.25rem;
@@ -691,6 +717,212 @@
       justify-content: flex-end;
       gap: 0.75rem;
       margin-top: 1.5rem;
+    }
+
+    /* Share Modal Specific Styles */
+    .share-modal-content {
+      max-width: 440px;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(to bottom, var(--bg-elevated), var(--bg-secondary));
+    }
+
+    .modal-header {
+      padding: 1.75rem 1.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .modal-subtitle {
+      color: var(--text-tertiary);
+      font-size: 0.95rem;
+      margin-bottom: 1.75rem;
+      line-height: 1.5;
+    }
+
+    .btn-close {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-tertiary);
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .btn-close:hover {
+      background: var(--bg-elevated);
+      color: var(--text);
+      transform: rotate(90deg);
+    }
+
+    .btn-close svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .share-modal-content .modal-body {
+      padding: 1.75rem;
+      margin-bottom: 0;
+    }
+
+    .share-option-group {
+      margin-bottom: 2rem;
+    }
+
+    .share-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-tertiary);
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .select-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .share-select {
+      appearance: none;
+      margin-top: 0;
+      cursor: pointer;
+      padding: 0.875rem 1.25rem;
+      padding-right: 3rem;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      font-size: 0.95rem;
+    }
+
+    .share-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-light);
+    }
+
+    .select-icon {
+      position: absolute;
+      right: 1.25rem;
+      width: 18px;
+      height: 18px;
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+
+    .share-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1.25rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: left;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .share-btn::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 0;
+    }
+
+    .share-btn:hover::after {
+      opacity: 0.03;
+    }
+
+    .share-btn-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .share-btn-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .share-btn-text {
+      display: flex;
+      flex-direction: column;
+      z-index: 1;
+    }
+
+    .share-btn-text span {
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+
+    .share-btn-text small {
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+    }
+
+    .share-btn-primary .share-btn-icon {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      color: white;
+    }
+
+    .share-btn-secondary .share-btn-icon {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .share-btn:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+      border-color: var(--accent);
+    }
+
+    .share-btn-primary:hover .share-btn-icon {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px var(--accent-light);
+    }
+
+    .share-btn-secondary:hover .share-btn-icon {
+      background: var(--text);
+      color: var(--bg);
+      transform: scale(1.1);
+    }
+
+    .share-btn:active {
+      transform: translateY(-1px) scale(0.98);
     }
     
     /* Status Bar */
